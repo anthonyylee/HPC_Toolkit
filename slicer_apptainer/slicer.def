@@ -1,0 +1,55 @@
+Bootstrap: docker
+From: ubuntu:22.04
+
+%post
+    apt-get update && apt-get install -y \
+        wget ca-certificates unzip \
+        libglu1-mesa libpulse-mainloop-glib0 libnss3 \
+        libasound2 libsm6 libice6 qt5dxcb-plugin\
+        libx11-6 libx11-xcb1 libxcb1 libxcb-icccm4 \
+        libxkbcommon0 libxkbcommon-x11-0 \
+        libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 \
+        libxcb-shape0 libxcb-sync1 libxcb-xfixes0 libxcb-xinerama0 \
+        libxt6 libxrender1 libxext6 libxcomposite1 libxdamage1 \
+        libxrandr2 libxkbfile1 libfreetype6 libfontconfig1 \
+        libgl1-mesa-glx libgl1-mesa-dri mesa-utils \
+
+    # Install VirtualGL
+    #cd $HOME
+    #wget -O virtualgl.deb "https://github.com/VirtualGL/virtualgl/releases/download/3.1.4/virtualgl_3.1.4_amd64.deb"
+    #apt install -y ./virtualgl.deb
+    #rm -rf virtualgl.deb
+
+    # Install VirtualGL - https://virtualgl.org/Downloads/YUM
+    apt install -y gnupg
+    wget -q -O- https://packagecloud.io/dcommander/virtualgl/gpgkey | \
+        gpg --dearmor >/etc/apt/trusted.gpg.d/VirtualGL.gpg
+    wget -P /etc/apt/sources.list.d https://raw.githubusercontent.com/VirtualGL/repo/main/VirtualGL.list
+    apt update
+    apt install -y virtualgl
+
+    # Install TurboVNC
+    wget -q -O- https://packagecloud.io/dcommander/turbovnc/gpgkey | \
+        gpg --dearmor >/etc/apt/trusted.gpg.d/TurboVNC.gpg
+    wget -P /etc/apt/sources.list.d https://raw.githubusercontent.com/TurboVNC/repo/main/TurboVNC.list
+    apt update
+    apt install -y turbovnc
+
+    # Install 3D Slicer
+    mkdir -p /opt/slicer
+    cd /opt/slicer
+    wget -O Slicer-5.10.0.tar.gz "https://download.slicer.org/bitstream/6911b598ac7b1c95e7934427"
+    tar -zxvf Slicer-5.10.0.tar.gz
+    mv Slicer-*/* .
+    rm -rf Slicer-* Slicer-5.10.0.tar.gz
+    chmod +x /opt/slicer/Slicer
+
+%environment
+    # Add Slicer libs and binaries to environment
+    export SLICER_HOME="/opt/slicer"
+    export LD_LIBRARY_PATH="/lib"
+    export PATH=$SLICER_HOME:$LD_LIBRARY_PATH:$PATH
+    #export DISPLAY=:1
+
+%runscript
+    exec vglrun Slicer "$@"
