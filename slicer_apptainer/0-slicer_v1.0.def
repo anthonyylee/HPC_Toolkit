@@ -127,6 +127,10 @@ From: ubuntu:22.04
 	# Contents are written to a dedicated file within the container at build time.
 	exec Slicer "$@"
 
+	# NOTES - Ways to run the SCIF app from runscript
+	# Source: https://apptainer.org/docs/user/1.3/environment_and_metadata.html#environment-from-the-apptainer-runtime
+	#exec apptainer run --app <app_name> "$APPTAINER_CONTAINER" "%{@}
+
 %labels
 	# Used to add metadata to the file `/.singularity.d/labels.json`
 	# within the container in name-value pairs.
