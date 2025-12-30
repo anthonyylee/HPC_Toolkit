@@ -21,9 +21,16 @@ From: ubuntu:22.04
     #xfconf-query -c xfce4-screensaver -p /lock/enabled -s false
 
     # Install Nvidia drivers — To get nvidia-xconfig
-    add-apt-respository ppa:graphics-drivers/ppa && apt update
-    apt install -y nvidia-driver-580
-    nvidia-xconfig
+    #add-apt-respository ppa:graphics-drivers/ppa && apt update
+    #apt install -y nvidia-driver-580
+    #nvidia-xconfig
+
+    # Install Nvidia drivers - non-specific method
+    #add-apt-respository ppa:graphics-drivers/ppa && apt update
+    #apt install -y nvidia-driver  # NOT SURE WHY THIS IS NOT FOUND
+
+    # Setup Xorg configure for virtualgl
+    /usr/bin/Xorg -configure -configdir /etc/X11/
 
     # Install VirtualGL
     #cd $HOME
