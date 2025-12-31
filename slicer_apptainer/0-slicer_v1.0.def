@@ -1,145 +1,168 @@
 Bootstrap: docker
 From: ubuntu:22.04
 
-%arguments
-	# Variables for during the build process. Subjected to being overwritten
-        #  by `-build-arg` or `-build-arg-file`
-
-	MY_VNC_PASSWORD=12345678
-
-%setup
-	# BEWARE!!! Executed on the host system OUTSIDE of the container thus 
-        # could damage the host.
-
-%files
-	# Allows for copying files into the container with greater safety than 
-     	# the `%setup` section.
-
-%apphelp slicer
-	3D Slicer app.
-	SlicerMorph is not yet installed!!!
-	TODO Install SlicerMorph via script - https://www.google.com/search?q=slicermorph+install+via+script&rlz=1C5FPAB_enUS1190US1190&oq=slicermorph+install+via+script&gs_lcrp=EgZjaHJvbWUyBggAEEUYOdIBCDQzNTRqMGo0qAIAsAIB&sourceid=chrome&ie=UTF-8
-
-%apprun slicer
-	exec /opt/slicer/Slicer "${@}"
-
-%appinstall slicer
-	SLICER_HOME="/opt/slicer"
-	LD_LIBRARY_PATH="/lib"
-	mkdir -p $SLICER_HOME
-	cd $SLICER_HOME
-	wget -O Slicer-5.10.0.tar.gz "https://download.slicer.org/bitstream/6911b598ac7b1c95e7934427"
-	tar -zxvf Slicer-5.10.0.tar.gz
-	mv Slicer-*/* .
-	rm -rf Slicer-* Slicer-5.10.0.tar.gz
-	chmod +x ${SLICER_HOME}/Slicer
-
-	# Set variables 
-	echo "export PATH=$SLICER_HOME:\$PATH" >> $APPTAINER_ENVIRONMENT
-	echo "export PATH=$LD_LIBRARY_PATH:\$PATH" >> $APPTAINER_ENVIRONMENT
-	
-%apphelp turbovnc
-	Runs TurboVNC. However, unable to run via `apptainer run --app turbovnc <container_name.sif>`.
-
-	Error msg: 
-	INFO:    Terminating squashfuse_ll after timeout
-	INFO:    Timeouts can be caused by a running background process
-
-	TODO Figure out what is the background process issue when running this as an app.
-
-%apprun turbovnc
-	# Set VNC password
-	# Source: https://askubuntu.com/questions/328240/assign-vnc-password-using-script
-	mkdir $HOME/.vnc
-	echo {{MY_VNC_PASSWORD}} | vncpasswd -f > $HOME/.vnc/passwd
-	chmod 0600 $HOME/.vnc/passwd
-	echo "VNC password is {{MY_VNC_PASSWORD}}"
-	
-	exec /opt/TurboVNC/bin/vncserver "${@}"
-
-%appinstall turbovnc
-	# Source: https://turbovnc.org/Downloads/YUM
-	apt install -y gnupg wget
-	wget -q -O- https://packagecloud.io/dcommander/turbovnc/gpgkey | \
-		gpg --dearmor >/etc/apt/trusted.gpg.d/TurboVNC.gpg
-	wget -P /etc/apt/sources.list.d https://raw.githubusercontent.com/TurboVNC/repo/main/TurboVNC.list
-	apt update
-	apt install -y turbovnc
-
-	# Set variables 
-	echo "export PATH=/opt/TurboVNC/bin:\$PATH" >> $APPTAINER_ENVIRONMENT
-
-%apphelp virtualgl
-	Tillicum OOD desktop
-	`apptainer shell --nv <container_name.sif>` then run `vglrun -d 
-	$DISPLAY glxspheres64` is successful. Seems like Tillicum OOD desktop
-	uses display number :19 sometimes.
-
-	`apptainer run --nv --app virtualgl <container_name.sif> -d $DISPLAY 
-	glxspheres64` is successful. Seems like Tillicum OOD desktop uses 
-	display number :19 sometimes.
-
-%apprun virtualgl
-	exec /opt/VirtualGL/bin/vglrun "${@}"
-
-%appinstall virtualgl
-	# Source: https://virtualgl.org/Downloads/YUM
-	apt install -y gnupg wget
-	wget -q -O- https://packagecloud.io/dcommander/virtualgl/gpgkey | \
-	gpg --dearmor >/etc/apt/trusted.gpg.d/VirtualGL.gpg
-	wget -P /etc/apt/sources.list.d https://raw.githubusercontent.com/VirtualGL/repo/main/VirtualGL.list
-	apt update
-	apt install -y virtualgl
-
-	# Set variables 
-	echo "export PATH=/opt/VirtualGL/bin:\$PATH" >> $APPTAINER_ENVIRONMENT
-
-%post
-	# Runs in a clean environment. The env variables from the host are not 
-	# passed into the build.
-
-	apt-get update && apt-get install -y \
-		vim \
-		xfce4 \
-		wget ca-certificates unzip \
-		libglu1-mesa libpulse-mainloop-glib0 libnss3 \
-		libasound2 libsm6 libice6 qt5dxcb-plugin\
-		libx11-6 libx11-xcb1 libxcb1 libxcb-icccm4 \
-		libxkbcommon0 libxkbcommon-x11-0 \
-		libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 \
-		libxcb-shape0 libxcb-sync1 libxcb-xfixes0 libxcb-xinerama0 \
-		libxt6 libxrender1 libxext6 libxcomposite1 libxdamage1 \
-		libxrandr2 libxkbfile1 libfreetype6 libfontconfig1 \
-		libgl1-mesa-glx libgl1-mesa-dri mesa-utils \
-
-%test
-	# Runs at the very end of the build process to be used to validate the
-	# container.
-
-%environment
-	# Define environ variables that will be set at runtime.
-
-%startscript
-	# Similar to `%runscript` section. The contents are written to a dedicated
-	# file within the container at build time.
-
-%runscript
-	# Contents are written to a dedicated file within the container at build time.
-	exec Slicer "$@"
-
-	# NOTES - Ways to run the SCIF app from runscript
-	# Source: https://apptainer.org/docs/user/1.3/environment_and_metadata.html#environment-from-the-apptainer-runtime
-	#exec apptainer run --app <app_name> "$APPTAINER_CONTAINER" "%{@}
-
 %labels
-	# Used to add metadata to the file `/.singularity.d/labels.json`
-	# within the container in name-value pairs.
-	Author Anthony Lee
-	Version v1.0
+# Used to add metadata to the file `/.singularity.d/labels.json` within the container in name-value pairs.
+Author Anthony Lee
+Version v1.0
 
 %help
-	# Any text in this section will be transcribed into a dedicated
-	# metadata file in the container during the build process.
-	This container at a minimal should run 3D Slicer, however VirtualGL and
-	TurboVNC are also available. The goal is to run be able to hardware
-	accelerate the rendering, however, that is still a work in progress.
+# Any text in this section will be transcribed into a dedicated metadata file in the container during the build process.
+
+Container with 3D Slicer, TurboVNC, and VirtualGL.
+
+This container at a minimal should run 3D Slicer, however VirtualGL and TurboVNC are also available. The goal is to run
+be able to hardware accelerate the rendering, however, that is still a work in progress.
+
+KNOWN ISSUES:
+  - Attempting to run Apptainer containers as Apptainer service instances will result in "failed to connect to dbus"
+    error. To replicate, run any of the apps as a service, such as `apptainer instance run --app slicer $APPTAINER_CONTAINER` slicer_instance_1`.
+
+
+%arguments
+# Variables for during the build process. Subjected to being overwritten by
+# `-build-arg` or `-build-arg-file`
+
+MY_VNC_PASSWORD=12345678
+
+%setup
+# BEWARE!!! Executed on the host system OUTSIDE of the container thus could
+# damage the host.
+
+%files
+# Allows for copying files into the container with greater safety than the
+# `%setup` section.
+
+%apphelp slicer
+There are two methods to run the 3D Slicer application:
+
+  (1) Using Open On Demand (OOD) remote destkop
+    Access a remote desktop via OOD, open a terminal, and launch `apptainer run --nv --app slicer --bind /run <container_name.sif>`.
+    The flag to bind `/run` allows for runtime files to be saved.
+
+  (2) Launching a VNC server, port-forward, and access via a VNC client
+    In a Slurm job or Slurm allocated (e.g., `salloc`) interactive interactive environment, run `apptainer run --nv --app turbovnc --bind /run <container_name.sif>`.
+    Port-forward from local machine to the running node using `ssh -L $[5900+N]:localhost:$[5900+N] <username>@<running_node_hostname>`,
+    then access the desktop using a VNC client.
+
+%apprun slicer
+exec /opt/slicer/Slicer "${@}"
+
+%appinstall slicer
+# xvfb for headless extension installation
+apt install -y xvfb
+
+# Install slicer
+SLICER_HOME="/opt/slicer"
+LD_LIBRARY_PATH="/lib"
+mkdir -p $SLICER_HOME
+cd $SLICER_HOME
+wget -O Slicer-5.10.0.tar.gz "https://download.slicer.org/bitstream/6911b598ac7b1c95e7934427"
+tar -zxvf Slicer-5.10.0.tar.gz
+mv Slicer-*/* .
+rm -rf Slicer-* Slicer-5.10.0.tar.gz
+chmod +x ${SLICER_HOME}/Slicer
+
+# Install SlicerMorph extension in headless mode (Source: https://discourse.slicer.org/t/running-slicer-on-headless-server-installing-extensions-and-more/11689/4)
+cat << EOF > slicer_install_slicermorph_extension.py
+# https://slicer.readthedocs.io/en/latest/developer_guide/script_repository.html#download-and-install-extension
+extensionName = 'SlicerMorph'
+em = slicer.app.extensionsManagerModel()
+em.interactive = False  # prevent display of popups
+restart = True
+if not em.installExtensionFromServer(extensionName, restart):
+  raise ValueError(f"Failed to install {extensionName} extension")
+EOF
+xvfb-run -a $SLICER_HOME/Slicer --no-splash --no-main-window --python-script "./slicer_install_slicermorph_extension.py"
+
+# Set variables 
+echo "export PATH=$SLICER_HOME:\$PATH" >> $APPTAINER_ENVIRONMENT
+echo "export PATH=$LD_LIBRARY_PATH:\$PATH" >> $APPTAINER_ENVIRONMENT
+  
+%apphelp turbovnc
+Run the TurboVNC server. Start the server with `apptainer run --nv --app turbovnc <container_name.sif>`.
+
+The VNC server is ran in the foreground else the contianer will terminate. Thus, when running this app, the process will
+be held by the server and terminating the process will result in the server being terminated.
+
+%apprun turbovnc
+# Have to run in foreground else the container will terminate and give a squashfuse_ll terminted after timeout error.
+echo "VNC password is {{MY_VNC_PASSWORD}}"
+exec /opt/TurboVNC/bin/vncserver -fg "${@}"
+
+%appinstall turbovnc
+# Source: https://turbovnc.org/Downloads/YUM
+apt install -y gnupg wget
+wget -q -O- https://packagecloud.io/dcommander/turbovnc/gpgkey | \
+  gpg --dearmor >/etc/apt/trusted.gpg.d/TurboVNC.gpg
+wget -P /etc/apt/sources.list.d https://raw.githubusercontent.com/TurboVNC/repo/main/TurboVNC.list
+apt update
+apt install -y turbovnc
+
+# Set VNC password
+# Source: https://askubuntu.com/questions/328240/assign-vnc-password-using-script
+mkdir $HOME/.vnc
+echo {{MY_VNC_PASSWORD}} | /opt/TurboVNC/bin/vncpasswd -f > $HOME/.vnc/passwd
+chmod 0600 $HOME/.vnc/passwd
+echo "VNC password is {{MY_VNC_PASSWORD}}"
+  
+# Set variables 
+echo "export PATH=/opt/TurboVNC/bin:\$PATH" >> $APPTAINER_ENVIRONMENT
+
+%apphelp virtualgl
+Tillicum OOD desktop
+`apptainer shell --nv <container_name.sif>` then run `vglrun -d $DISPLAY glxspheres64` is successful. Seems like 
+Tillicum OOD desktop uses display number :19 sometimes.
+
+`apptainer run --nv --app virtualgl <container_name.sif> -d $DISPLAY glxspheres64`is successful. Seems like Tillicum OOD
+desktop uses display number :19 sometimes.
+
+TODO - 2025-12-31 AL still trying to figure out how toget VirtualGL working.
+
+%apprun virtualgl
+exec /opt/VirtualGL/bin/vglrun "${@}"
+
+%appinstall virtualgl
+# Source: https://virtualgl.org/Downloads/YUM
+apt install -y gnupg wget
+wget -q -O- https://packagecloud.io/dcommander/virtualgl/gpgkey | \
+gpg --dearmor >/etc/apt/trusted.gpg.d/VirtualGL.gpg
+wget -P /etc/apt/sources.list.d https://raw.githubusercontent.com/VirtualGL/repo/main/VirtualGL.list
+apt update
+apt install -y virtualgl
+
+# Set variables 
+echo "export PATH=/opt/VirtualGL/bin:\$PATH" >> $APPTAINER_ENVIRONMENT
+
+%post
+# Runs in a clean environment. The env variables from the host are not passed into the build.
+
+apt-get update && apt-get install -y \
+  vim \
+  xfce4 \
+  wget ca-certificates unzip \
+  libglu1-mesa libpulse-mainloop-glib0 libnss3 \
+  libasound2 libsm6 libice6 qt5dxcb-plugin\
+  libx11-6 libx11-xcb1 libxcb1 libxcb-icccm4 \
+  libxkbcommon0 libxkbcommon-x11-0 \
+  libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 \
+  libxcb-shape0 libxcb-sync1 libxcb-xfixes0 libxcb-xinerama0 \
+  libxt6 libxrender1 libxext6 libxcomposite1 libxdamage1 \
+  libxrandr2 libxkbfile1 libfreetype6 libfontconfig1 \
+  libgl1-mesa-glx libgl1-mesa-dri mesa-utils \
+
+%test
+# Runs at the very end of the build process to be used to validate the container.
+
+%environment
+# Define environ variables that will be set at runtime.
+
+%startscript
+# Similar to `%runscript` section. The contents are written to a dedicated file within the container at build time.
+
+%runscript
+# Contents are written to a dedicated file within the container at build time.
+
+# NOTES - Ways to run the SCIF app from runscript
+# Source: https://apptainer.org/docs/user/1.3/environment_and_metadata.html#environment-from-the-apptainer-runtime
+# exec apptainer run --app <app_name> "$APPTAINER_CONTAINER" "%{@}
