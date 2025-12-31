@@ -37,11 +37,11 @@ MY_VNC_PASSWORD=12345678
 There are two methods to run the 3D Slicer application:
 
   (1) Using Open On Demand (OOD) remote destkop
-    Access a remote desktop via OOD, open a terminal, and launch `apptainer run --nv --app slicer --bind /run /gpfs <container_name.sif>`.
+    Access a remote desktop via OOD, open a terminal, and launch `apptainer run --nv --app slicer --bind /run,/gpfs <container_name.sif>`.
     The flag to bind `/run` allows for runtime files to be saved.
 
   (2) Launching a VNC server, port-forward, and access via a VNC client
-    In a Slurm job or Slurm allocated (e.g., `salloc`) interactive interactive environment, run `apptainer run --nv --app turbovnc --bind /run /gpfs <container_name.sif>`.
+    In a Slurm job or Slurm allocated (e.g., `salloc`) interactive interactive environment, run `apptainer run --nv --app turbovnc --bind /run,/gpfs <container_name.sif>`.
     Port-forward from local machine to the running node using `ssh -L $[5900+N]:localhost:$[5900+N] <username>@<running_node_hostname>`,
     then access the desktop using a VNC client.
 
