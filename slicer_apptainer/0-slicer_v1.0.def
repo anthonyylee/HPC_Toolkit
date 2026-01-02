@@ -11,6 +11,8 @@ Version v1.0
 
 Container with 3D Slicer, TurboVNC, and VirtualGL.
 
+`apptainer run --nv --bind /run,/gpfs --app turbovnc <container_name.sif>`
+
 This container at a minimal should run 3D Slicer, however VirtualGL and TurboVNC are also available. The goal is to run
 be able to hardware accelerate the rendering, however, that is still a work in progress.
 
@@ -23,7 +25,7 @@ KNOWN ISSUES:
 # Variables for during the build process. Subjected to being overwritten by
 # `-build-arg` or `-build-arg-file`
 
-MY_VNC_PASSWORD=12345678
+MY_VNC_PASSWORD=12341234
 
 %setup
 # BEWARE!!! Executed on the host system OUTSIDE of the container thus could
@@ -87,8 +89,11 @@ be held by the server and terminating the process will result in the server bein
 
 %apprun turbovnc
 # Have to run in foreground else the container will terminate and give a squashfuse_ll terminted after timeout error.
+# Disable screensaver
+xset s off
 echo "VNC password is {{MY_VNC_PASSWORD}}"
-exec /opt/TurboVNC/bin/vncserver -fg "${@}"
+# Using `vglrun -d egl` to force using EGL
+exec vglrun -d egl vncserver -fg "${@}"
 
 %appinstall turbovnc
 # Source: https://turbovnc.org/Downloads/YUM
@@ -96,8 +101,7 @@ apt install -y gnupg wget
 wget -q -O- https://packagecloud.io/dcommander/turbovnc/gpgkey | \
   gpg --dearmor >/etc/apt/trusted.gpg.d/TurboVNC.gpg
 wget -P /etc/apt/sources.list.d https://raw.githubusercontent.com/TurboVNC/repo/main/TurboVNC.list
-apt update
-apt install -y turbovnc
+apt update && apt install -y turbovnc
 
 # Set VNC password
 # Source: https://askubuntu.com/questions/328240/assign-vnc-password-using-script
@@ -128,8 +132,7 @@ apt install -y gnupg wget
 wget -q -O- https://packagecloud.io/dcommander/virtualgl/gpgkey | \
 gpg --dearmor >/etc/apt/trusted.gpg.d/VirtualGL.gpg
 wget -P /etc/apt/sources.list.d https://raw.githubusercontent.com/VirtualGL/repo/main/VirtualGL.list
-apt update
-apt install -y virtualgl
+apt update && apt install -y virtualgl
 
 # Set variables 
 echo "export PATH=/opt/VirtualGL/bin:\$PATH" >> $APPTAINER_ENVIRONMENT
@@ -137,8 +140,9 @@ echo "export PATH=/opt/VirtualGL/bin:\$PATH" >> $APPTAINER_ENVIRONMENT
 %post
 # Runs in a clean environment. The env variables from the host are not passed into the build.
 
-apt-get update && apt-get install -y \
+apt update && apt install -y \
   vim \
+  man-db \
   xfce4 \
   wget ca-certificates unzip \
   libglu1-mesa libpulse-mainloop-glib0 libnss3 \
@@ -150,6 +154,28 @@ apt-get update && apt-get install -y \
   libxt6 libxrender1 libxext6 libxcomposite1 libxdamage1 \
   libxrandr2 libxkbfile1 libfreetype6 libfontconfig1 \
   libgl1-mesa-glx libgl1-mesa-dri mesa-utils \
+
+
+# https://gitlab.com/nvidia/container-images/opengl/blob/ubuntu20.04/glvnd/devel/Dockerfile
+apt update && apt install -y --no-install-recommends \
+  pkg-config \
+  libglvnd-dev libglvnd-dev:i386 \
+  libgl1-mesa-dev libgl1-mesa-dev:i386 \
+  libegl1-mesa-dev libegl1-mesa-dev:i386 \
+  libgles2-mesa-dev libgles2-mesa-dev:i386 && \
+rm -rf /var/lib/apt/lists/*
+
+
+# Some optional stuff
+# - xfce4-goodies because they are goodies
+# - pciutils because I need lspci
+# - kmod so I can use lsmod
+apt update && apt install -y \
+  xfce4-goodies \
+  pciutils \
+  kmod \
+  inxi \
+  lshw \
 
 %test
 # Runs at the very end of the build process to be used to validate the container.
