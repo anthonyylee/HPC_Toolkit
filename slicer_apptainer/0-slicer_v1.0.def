@@ -88,12 +88,20 @@ The VNC server is ran in the foreground else the contianer will terminate. Thus,
 be held by the server and terminating the process will result in the server being terminated.
 
 %apprun turbovnc
-# Have to run in foreground else the container will terminate and give a squashfuse_ll terminted after timeout error.
+# Set VNC password
+# Source: https://askubuntu.com/questions/328240/assign-vnc-password-using-script
+mkdir $HOME/.vnc
+echo {{MY_VNC_PASSWORD}} | /opt/TurboVNC/bin/vncpasswd -f > $HOME/.vnc/passwd
+chmod 0600 $HOME/.vnc/passwd
+echo "VNC password is {{MY_VNC_PASSWORD}}"
+  
 # Disable screensaver
 xset s off
-echo "VNC password is {{MY_VNC_PASSWORD}}"
+
+# Have to run in foreground else the container will terminate and give a squashfuse_ll terminted after timeout error.
 # Using `vglrun -d egl` to force using EGL
-exec vglrun -d egl vncserver -fg "${@}"
+#exec vglrun -d egl /opt/TurboVNC/bin/vncserver -fg "${@}"
+exec /opt/TurboVNC/bin/vncserver -fg "${@}"
 
 %appinstall turbovnc
 # Source: https://turbovnc.org/Downloads/YUM
@@ -103,14 +111,6 @@ wget -q -O- https://packagecloud.io/dcommander/turbovnc/gpgkey | \
 wget -P /etc/apt/sources.list.d https://raw.githubusercontent.com/TurboVNC/repo/main/TurboVNC.list
 apt update && apt install -y turbovnc
 
-# Set VNC password
-# Source: https://askubuntu.com/questions/328240/assign-vnc-password-using-script
-# TODO - Fix this because the password is set into the user home directory on the cluster and is only set when the image is built.
-mkdir $HOME/.vnc
-echo {{MY_VNC_PASSWORD}} | /opt/TurboVNC/bin/vncpasswd -f > $HOME/.vnc/passwd
-chmod 0600 $HOME/.vnc/passwd
-echo "VNC password is {{MY_VNC_PASSWORD}}"
-  
 # Set variables 
 echo "export PATH=/opt/TurboVNC/bin:\$PATH" >> $APPTAINER_ENVIRONMENT
 
@@ -158,13 +158,13 @@ apt update && apt install -y \
 
 
 # https://gitlab.com/nvidia/container-images/opengl/blob/ubuntu20.04/glvnd/devel/Dockerfile
-apt update && apt install -y --no-install-recommends \
-  pkg-config \
-  libglvnd-dev libglvnd-dev:i386 \
-  libgl1-mesa-dev libgl1-mesa-dev:i386 \
-  libegl1-mesa-dev libegl1-mesa-dev:i386 \
-  libgles2-mesa-dev libgles2-mesa-dev:i386 && \
-rm -rf /var/lib/apt/lists/*
+#apt update && apt install -y --no-install-recommends \
+#  pkg-config \
+#  libglvnd-dev libglvnd-dev:i386 \
+#  libgl1-mesa-dev libgl1-mesa-dev:i386 \
+#  libegl1-mesa-dev libegl1-mesa-dev:i386 \
+#  libgles2-mesa-dev libgles2-mesa-dev:i386 && \
+#rm -rf /var/lib/apt/lists/*
 
 
 # Some optional stuff
