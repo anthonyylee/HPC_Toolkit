@@ -105,6 +105,7 @@ apt update && apt install -y turbovnc
 
 # Set VNC password
 # Source: https://askubuntu.com/questions/328240/assign-vnc-password-using-script
+# TODO - Fix this because the password is set into the user home directory on the cluster and is only set when the image is built.
 mkdir $HOME/.vnc
 echo {{MY_VNC_PASSWORD}} | /opt/TurboVNC/bin/vncpasswd -f > $HOME/.vnc/passwd
 chmod 0600 $HOME/.vnc/passwd
