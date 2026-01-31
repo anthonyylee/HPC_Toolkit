@@ -13,35 +13,35 @@ Each are installed as an SCIF app and can be launched independently. However, it
 VNC server with VirtualGL for hardware accelerated rendering. Use the following command to launch the vncserver with 
 VirtualGL for hardware accelerated VNC session.
 
-`apptainer run --nv --bind /run,/gpfs --app turbovnc <container_name.sif>`
-OR
-`apptainer run --nv --bind /run,/gpfs <container_name.sif>`
+`apptainer run --app turbovnc --nv --bind /run,/gpfs <container_name.sif>`
+
+Detailed notes: 
+- Usually Tillicum automatically bind /gpfs, but it is helpful to be explicit.
+- `--nv` flag is important for VirtualGL to work. Without the Nvidia drivers, VirtualGL will use LLVM Pipe software
+  acceleration instead of hardware acceleration.
 
 %arguments
 # Variables for during the build process. Subjected to being overwritten by
 # `-build-arg` or `-build-arg-file`
-
 MY_VNC_PASSWORD=12341234
 
 %setup
-# BEWARE!!! Executed on the host system OUTSIDE of the container thus could
-# damage the host.
+# BEWARE!!! Executed on the host system OUTSIDE of the container thus could damage the host.
 
 %files
-# Allows for copying files into the container with greater safety than the
-# `%setup` section.
+# Allows for copying files into the container with greater safety than the `%setup` section.
 
 %apphelp slicer
 There are two methods to run the 3D Slicer application:
 
   (1) Using Open On Demand (OOD) remote destkop
-    Access a remote desktop via OOD, open a terminal, and launch `apptainer run --nv --app slicer --bind /run,/gpfs <container_name.sif>`.
-    The flag to bind `/run` allows for runtime files to be saved.
+    Access a remote desktop via OOD, open a terminal, and launch `apptainer run --app slicer --nv --bind /run,/gpfs <container_name.sif>`.
+    The flag to bind `/run` allows for runtime files to be saved. However, this will not be hardware accelerated (see the second method).
 
-  (2) Launching a VNC server, port-forward, and access via a VNC client
-    In a Slurm job or Slurm allocated (e.g., `salloc`) interactive interactive environment, run `apptainer run --nv --app turbovnc --bind /run,/gpfs <container_name.sif>`.
-    Port-forward from local machine to the running node using `ssh -L $[5900+N]:localhost:$[5900+N] <username>@<running_node_hostname>`,
-    then access the desktop using a VNC client.
+  (2) Launching the TurboVNC server, port-forward from local client, and access with TurboVNC
+    In a Slurm job or Slurm allocated (e.g., `salloc`) environment, run `apptainer run --app turbovnc --nv --bind /run,/gpfs <container_name.sif>`.
+    Port-forward from local client to the compute node using `ssh -L $[5900+N]:localhost:$[5900+N] <username>@<running_node_hostname>` 
+    (e.g., `ssh -L 5901:localhost:5901 antlee@g001.hyak.local`), then access the desktop using TurboVNC client.
 
 %apprun slicer
 exec /opt/slicer/Slicer "${@}"
@@ -78,10 +78,11 @@ echo "export PATH=$SLICER_HOME:\$PATH" >> $APPTAINER_ENVIRONMENT
 echo "export PATH=$LD_LIBRARY_PATH:\$PATH" >> $APPTAINER_ENVIRONMENT
   
 %apphelp turbovnc
-Run the TurboVNC server. Start the server with `apptainer run --nv --app turbovnc <container_name.sif>`.
+Run the TurboVNC server. Start the server with `apptainer run --app turbovnc --nv <container_name.sif>`.
 
 The VNC server is ran in the foreground else the contianer will terminate. Thus, when running this app, the process will
 be held by the server and terminating the process will result in the server being terminated.
+`--nv` flag is required for VirtualGL to utilize hardware acceleration.
 
 %apprun turbovnc
 # Set VNC password
@@ -92,12 +93,12 @@ chmod 0600 $HOME/.vnc/passwd
 echo "VNC password is {{MY_VNC_PASSWORD}}"
   
 # Disable screensaver
-xset s off
+#xset s off TODO: 2026-01-30 AL - Figure how to get this to work
 
 # Have to run in foreground else the container will terminate and give a squashfuse_ll terminted after timeout error.
 # Using `vglrun -d egl` to force using EGL
-#exec /opt/TurboVNC/bin/vncserver -fg "${@}"
-exec vglrun -d egl /opt/TurboVNC/bin/vncserver -fg "${@}"
+# exec vglrun -d egl /opt/TurboVNC/bin/vncserver -fg "${@}" # fg flag makes it run in the foreground preventing it from being killed when the initiating SSH session ends.
+exec vglrun -d egl /opt/TurboVNC/bin/vncserver "${@}"
 
 %appinstall turbovnc
 # Source: https://turbovnc.org/Downloads/YUM
@@ -111,15 +112,12 @@ apt update && apt install -y turbovnc
 echo "export PATH=/opt/TurboVNC/bin:\$PATH" >> $APPTAINER_ENVIRONMENT
 
 %apphelp virtualgl
-Tillicum OOD desktop
-`apptainer shell --nv <container_name.sif>` then run `vglrun -d $DISPLAY glxspheres64` is successful. Seems like 
-Tillicum OOD desktop uses display number :19 sometimes.
+Use `vglrun -d egl glxspheres64` to use hardware acceleration. `vglrun -d $DISPLAY glxspheres64` does not work.
 
-`apptainer run --nv --app virtualgl <container_name.sif> -d $DISPLAY glxspheres64`is successful. Seems like Tillicum OOD
-desktop uses display number :19 sometimes.
+VirtualGL to allow for hardware acceleration when using with TurboVNC server and client.
 
 %apprun virtualgl
-exec /opt/VirtualGL/bin/vglrun "${@}"
+exec /opt/VirtualGL/bin/vglrun -d egl "${@}"
 
 %appinstall virtualgl
 # Source: https://virtualgl.org/Downloads/YUM
@@ -186,4 +184,6 @@ apt update && apt install -y \
 
 # NOTES - Ways to run the SCIF app from runscript
 # Source: https://apptainer.org/docs/user/1.3/environment_and_metadata.html#environment-from-the-apptainer-runtime
-exec apptainer run --app turbovnc "$APPTAINER_CONTAINER" "${@}"
+# exec apptainer run --app turbovnc "$APPTAINER_CONTAINER" "${@}"
+
+echo "Run `apptainer run --app turbovnc --nv --bind /run,/gpfs $APPTAINER_CONTAINER`"
