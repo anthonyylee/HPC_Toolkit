@@ -96,7 +96,8 @@ chmod 0600 $HOME/.vnc/passwd
 echo "VNC password is {{MY_VNC_PASSWORD}}"
   
 # Disable screensaver
-xset s off
+# Note - Does not work, uanble to open display error. Probably because the display variable is not set yet.
+#xset s off
 
 # Have to run in foreground else the container will terminate and give a squashfuse_ll terminted after timeout error.
 # Using `vglrun -d egl` to force using EGL
