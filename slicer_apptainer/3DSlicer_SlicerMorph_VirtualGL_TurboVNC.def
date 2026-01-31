@@ -24,6 +24,8 @@ Detailed notes:
 - `--nv` flag is important for VirtualGL to work. Without the Nvidia drivers, VirtualGL will use LLVM Pipe software
   acceleration instead of hardware acceleration.
 
+[Recipe source](https://github.com/anthonyylee/HPC_Toolkit/blob/main/slicer_apptainer/3DSlicer_SlicerMorph_VirtualGL_TurboVNC.def)
+
 %arguments
 # Variables for during the build process. Subjected to being overwritten by
 # `-build-arg` or `-build-arg-file`
