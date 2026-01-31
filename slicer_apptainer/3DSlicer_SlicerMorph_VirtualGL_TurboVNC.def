@@ -193,17 +193,21 @@ apt update && apt install -y \
 # Source: https://apptainer.org/docs/user/1.3/environment_and_metadata.html#environment-from-the-apptainer-runtime
 # exec apptainer run --app turbovnc "$APPTAINER_CONTAINER" "${@}"
 
-echo <<- EOF
-  VNC password is {{MY_VNC_PASSWORD}}
+cat <<-'EOF'
 
-  Run 
-    `apptainer run --app turbovnc --nv --bind /run,/gpfs <container_name.sif>`
-  OR
-    `apptainer exec --nv <container_name.sif> vlgrun -d egl vncserver -fg` (`-fg` flag required)
-  OR
-    `apptainer shell --nv --bind /run,/gpfs <container_name.sif>`
-     and then launch TurboVNC server with `vglrun -d egl vncserver` or
-     `vglrun -d egl vncserver -fg` (`-fg` flag optional)  to run the server in the foreground.
+
+	VNC password is {{MY_VNC_PASSWORD}}
+
+	Run 
+	  `apptainer run --app turbovnc --nv --bind /run,/gpfs <container_name.sif>`
+	OR
+	  `apptainer exec --nv <container_name.sif> vlgrun -d egl vncserver -fg` (`-fg` flag required)
+	OR
+	  `apptainer shell --nv --bind /run,/gpfs <container_name.sif>`
+	  and then launch TurboVNC server with `vglrun -d egl vncserver` or
+	  `vglrun -d egl vncserver -fg` (`-fg` flag optional)  to run the server in the foreground.
+
+
 EOF
   
 
