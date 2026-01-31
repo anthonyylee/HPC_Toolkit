@@ -4,22 +4,18 @@ From: ubuntu:22.04
 %labels
 # Used to add metadata to the file `/.singularity.d/labels.json` within the container in name-value pairs.
 Author Anthony Lee
-Version v1.0
+Version v1.1
 
 %help
 # Any text in this section will be transcribed into a dedicated metadata file in the container during the build process.
-
 Container with 3D Slicer, TurboVNC, and VirtualGL.
+Each are installed as an SCIF app and can be launched independently. However, it is recommended to launch the TurboVNC
+VNC server with VirtualGL for hardware accelerated rendering. Use the following command to launch the vncserver with 
+VirtualGL for hardware accelerated VNC session.
 
 `apptainer run --nv --bind /run,/gpfs --app turbovnc <container_name.sif>`
-
-This container at a minimal should run 3D Slicer, however VirtualGL and TurboVNC are also available. The goal is to run
-be able to hardware accelerate the rendering, however, that is still a work in progress.
-
-KNOWN ISSUES:
-  - Attempting to run Apptainer containers as Apptainer service instances will result in "failed to connect to dbus"
-    error. To replicate, run any of the apps as a service, such as `apptainer instance run --app slicer $APPTAINER_CONTAINER` slicer_instance_1`.
-
+OR
+`apptainer run --nv --bind /run,/gpfs <container_name.sif>`
 
 %arguments
 # Variables for during the build process. Subjected to being overwritten by
@@ -100,8 +96,8 @@ xset s off
 
 # Have to run in foreground else the container will terminate and give a squashfuse_ll terminted after timeout error.
 # Using `vglrun -d egl` to force using EGL
-#exec vglrun -d egl /opt/TurboVNC/bin/vncserver -fg "${@}"
-exec /opt/TurboVNC/bin/vncserver -fg "${@}"
+#exec /opt/TurboVNC/bin/vncserver -fg "${@}"
+exec vglrun -d egl /opt/TurboVNC/bin/vncserver -fg "${@}"
 
 %appinstall turbovnc
 # Source: https://turbovnc.org/Downloads/YUM
@@ -121,8 +117,6 @@ Tillicum OOD desktop uses display number :19 sometimes.
 
 `apptainer run --nv --app virtualgl <container_name.sif> -d $DISPLAY glxspheres64`is successful. Seems like Tillicum OOD
 desktop uses display number :19 sometimes.
-
-TODO - 2025-12-31 AL still trying to figure out how toget VirtualGL working.
 
 %apprun virtualgl
 exec /opt/VirtualGL/bin/vglrun "${@}"
@@ -192,4 +186,4 @@ apt update && apt install -y \
 
 # NOTES - Ways to run the SCIF app from runscript
 # Source: https://apptainer.org/docs/user/1.3/environment_and_metadata.html#environment-from-the-apptainer-runtime
-# exec apptainer run --app <app_name> "$APPTAINER_CONTAINER" "%{@}
+exec apptainer run --app turbovnc "$APPTAINER_CONTAINER" "${@}"
