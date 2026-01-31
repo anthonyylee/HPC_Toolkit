@@ -14,6 +14,8 @@ VNC server with VirtualGL for hardware accelerated rendering. Use the following 
 VirtualGL for hardware accelerated VNC session.
 
 `apptainer run --app turbovnc --nv --bind /run,/gpfs <container_name.sif>`
+`apptainer shell --nv --bimd /run,/gpfs <container_name.sif>`
+`apptainer exec --nv <container_name.sif> vlgrun -d egl vncserver -fg`
 
 Detailed notes: 
 - Usually Tillicum automatically bind /gpfs, but it is helpful to be explicit.
@@ -189,11 +191,16 @@ apt update && apt install -y \
 # exec apptainer run --app turbovnc "$APPTAINER_CONTAINER" "${@}"
 
 echo <<- EOF
+  VNC password is {{MY_VNC_PASSWORD}}
+
   Run 
     `apptainer run --app turbovnc --nv --bind /run,/gpfs <container_name.sif>`
   OR
+    `apptainer exec --nv <container_name.sif> vlgrun -d egl vncserver -fg`
+  OR
     `apptainer shell --nv --bind /run,/gpfs <container_name.sif>`
-     and then launch TurboVNC server with `vglrun -d egl vncserver`.
+     and then launch TurboVNC server with `vglrun -d egl vncserver` or
+     `vglrun -d egl vncserver -fg` to run the server in the foreground.
 EOF
   
 
