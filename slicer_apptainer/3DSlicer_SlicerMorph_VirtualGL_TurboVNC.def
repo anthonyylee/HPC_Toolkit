@@ -5,6 +5,8 @@ From: ubuntu:22.04
 # Used to add metadata to the file `/.singularity.d/labels.json` within the container in name-value pairs.
 Author Anthony Lee
 Version v1.1
+Source "https://github.com/anthonyylee/HPC_Toolkit/blob/main/slicer_apptainer/3DSlicer_SlicerMorph_VirtualGL_TurboVNC.def"
+
 
 %help
 # Any text in this section will be transcribed into a dedicated metadata file in the container during the build process.
@@ -23,8 +25,6 @@ Detailed notes:
 - Usually Tillicum automatically bind /gpfs, but it is helpful to be explicit.
 - `--nv` flag is important for VirtualGL to work. Without the Nvidia drivers, VirtualGL will use LLVM Pipe software
   acceleration instead of hardware acceleration.
-
-[Recipe source](https://github.com/anthonyylee/HPC_Toolkit/blob/main/slicer_apptainer/3DSlicer_SlicerMorph_VirtualGL_TurboVNC.def)
 
 %arguments
 # Variables for during the build process. Subjected to being overwritten by
