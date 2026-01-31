@@ -7,7 +7,6 @@ Author Anthony Lee
 Version v1.1
 Source "https://github.com/anthonyylee/HPC_Toolkit/blob/main/slicer_apptainer/3DSlicer_SlicerMorph_VirtualGL_TurboVNC.def"
 
-
 %help
 # Any text in this section will be transcribed into a dedicated metadata file in the container during the build process.
 Container with 3D Slicer, TurboVNC, and VirtualGL.
