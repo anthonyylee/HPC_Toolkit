@@ -67,14 +67,14 @@ rm -rf Slicer-* Slicer-5.10.0.tar.gz
 chmod +x ${SLICER_HOME}/Slicer
 
 # Install SlicerMorph extension in headless mode (Source: https://discourse.slicer.org/t/running-slicer-on-headless-server-installing-extensions-and-more/11689/4)
-cat << EOF > slicer_install_slicermorph_extension.py
-# https://slicer.readthedocs.io/en/latest/developer_guide/script_repository.html#download-and-install-extension
-extensionName = 'SlicerMorph'
-em = slicer.app.extensionsManagerModel()
-em.interactive = False  # prevent display of popups
-restart = True
-if not em.installExtensionFromServer(extensionName, restart):
-  raise ValueError(f"Failed to install {extensionName} extension")
+cat <<-'EOF' > slicer_install_slicermorph_extension.py
+	# https://slicer.readthedocs.io/en/latest/developer_guide/script_repository.html#download-and-install-extension
+	extensionName = 'SlicerMorph'
+	em = slicer.app.extensionsManagerModel()
+	em.interactive = False  # prevent display of popups
+	restart = True
+	if not em.installExtensionFromServer(extensionName, restart):
+	  raise ValueError(f"Failed to install {extensionName} extension")
 EOF
 xvfb-run -a $SLICER_HOME/Slicer --no-splash --no-main-window --python-script "./slicer_install_slicermorph_extension.py"
 
@@ -96,8 +96,14 @@ rm -drf $HOME/.vnc
 mkdir $HOME/.vnc
 echo {{MY_VNC_PASSWORD}} | /opt/TurboVNC/bin/vncpasswd -f > $HOME/.vnc/passwd
 chmod 0600 $HOME/.vnc/passwd
-echo "VNC password is {{MY_VNC_PASSWORD}}"
+cat <<-'EOF'
+
+	####################	
+	VNC password is {{MY_VNC_PASSWORD}}
+	####################	
   
+EOF
+
 # Disable screensaver
 # Note - Does not work, uanble to open display error. Probably because the display variable is not set yet.
 # xset s off TODO: 2026-01-30 AL - Figure how to get this to work
